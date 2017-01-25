@@ -9,7 +9,8 @@
   "scripts": {
     "lint": "eslint .",
     "unit-tests": "cd tests && node main.js",
-    "test": "npm run lint && npm run unit-tests"
+    "test": "npm run lint && npm run unit-tests",
+    "prepublish": "npm test"
   },
   "keywords": [
     "conf",

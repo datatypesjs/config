@@ -101,7 +101,6 @@ module.exports = class Config {
       `~/.${this.appName}/${this.appName}`,
       `~/.config/${this.appName}/config`,
       `~/.config/${this.appName}/${this.appName}`,
-      // '/**/.myapp',
     ]
     let currentPath = ''
     process
@@ -132,6 +131,11 @@ module.exports = class Config {
       }
     })
 
+    return this
+  }
+
+  merge (configObject) {
+    this._config = merge(this._config, configObject)
     return this
   }
 
