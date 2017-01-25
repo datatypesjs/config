@@ -42,7 +42,7 @@ config
   })
   .loadCliArguments()
   .loadDefaultFiles()
-  .loadFile({path: 'path/to/config-file.yaml'})
+  .loadFile({absolutePath: '/path/to/config-file.yaml'})
 
 console.log(config.object)
 ```
@@ -53,14 +53,14 @@ console.log(config.object)
 With increasing priority:
 
 - `.myapp`
-- `.myapp.{json,yaml}`
+- `.myapp{,.json,.yaml}`
 - `.myapp/config`
-- `.myapp/config.{json,yaml}`
-- `.config/myapp/config.{json,yaml}` (This with `.yaml` is recommended)
-- `.config/myapp/myapp.{json,yaml}`
-- `/parent/path/**/.myapp.{json,yaml}`
+- `.myapp/config{,.json,.yaml}`
+- `.config/myapp/config{,.json,.yaml}` (This with `.yaml` is recommended)
+- `.config/myapp/myapp{,.json,.yaml}`
+- `/.myapp{,.json,.yaml}`
 - …
-- `$(pwd)/.myapp.{json,yaml}`
+- `$(pwd)/.myapp{,.json,.yaml}`
 
 
 ## Related

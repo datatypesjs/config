@@ -8,10 +8,9 @@ const Config = require('..')
   const expectedConfig = {value: 'something'}
   const config = new Config()
   config.loadEnvironment({prefix: 'CONFIGTEST_'})
+  delete process.env.CONFIGTEST_VALUE
 
   expect(config.object, 'to equal', expectedConfig)
-
-  delete process.env.CONFIGTEST_VALUE
 }
 
 {
@@ -26,13 +25,13 @@ const Config = require('..')
   }
   const config = new Config()
   config.loadEnvironment({prefix: 'CONFIGTEST_'})
+  delete process.env.CONFIGTEST_OBJECT__WITH__SUB_FIELDS
 
   expect(config.object, 'to equal', expectedConfig)
-
-  delete process.env.CONFIGTEST_OBJECT__WITH__SUB_FIELDS
 }
 
 {
+  const tempArgv = process.argv
   process.argv.push(
     '--sub-fields', 'value',
     '--verbose',
@@ -47,6 +46,30 @@ const Config = require('..')
   }
   const config = new Config()
   config.loadCliArguments()
+
+  process.argv = tempArgv
+
+  expect(config.object, 'to equal', expectedConfig)
+}
+
+{
+  const expectedConfig = {
+    additionalSetting: 'additionalValue',
+  }
+  const config = new Config()
+  config.loadFile({relativePath: '.no-default-name.yaml'})
+
+  expect(config.object, 'to equal', expectedConfig)
+}
+
+{
+  const expectedConfig = {
+    justASetting: 'value',
+    anotherSetting: 'this is an override value',
+    thisSettingIsOnlyLocal: 'and has a value',
+  }
+  const config = new Config({appName: 'testApp'})
+  config.loadDefaultFiles()
 
   expect(config.object, 'to equal', expectedConfig)
 }
