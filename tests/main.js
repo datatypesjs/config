@@ -73,3 +73,19 @@ const Config = require('..')
 
   expect(config.object, 'to equal', expectedConfig)
 }
+
+{
+  const configA = {
+    justASetting: 'value',
+    anotherSetting: 'this is an override value',
+  }
+  const configB = {
+    thirdSetting: 'foo',
+    fourthSetting: 'bar',
+  }
+  const config = new Config()
+    .merge(configA)
+    .merge(configB)
+
+  expect(config.object, 'to equal', Object.assign({}, configA, configB))
+}
