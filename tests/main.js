@@ -31,3 +31,22 @@ const Config = require('..')
 
   delete process.env.CONFIGTEST_OBJECT__WITH__SUB_FIELDS
 }
+
+{
+  process.argv.push(
+    '--sub-fields', 'value',
+    '--verbose',
+    '--foo', 'bar'
+  )
+
+  const expectedConfig = {
+    'sub-fields': 'value',
+    subFields: 'value',
+    verbose: true,
+    foo: 'bar',
+  }
+  const config = new Config()
+  config.loadCliArguments()
+
+  expect(config.object, 'to equal', expectedConfig)
+}

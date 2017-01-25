@@ -1,5 +1,5 @@
 const merge = require('deepmerge')
-// const yargsParser = require('yargs-parser')
+const yargsParser = require('yargs-parser')
 
 module.exports = class Config {
   constructor (options = {}) {
@@ -49,11 +49,16 @@ module.exports = class Config {
 
         this._config = merge(this._config, object)
       })
+
+    return this
   }
 
-  // loadArgv () {
-  //   const cliArgs = process.argv.slice(2)
-  // }
+  loadCliArguments () {
+    const args = yargsParser(process.argv.slice(2))
+    delete args._
+    this._config = merge(this._config, args)
+    return this
+  }
 
   get object () {
     return this._config

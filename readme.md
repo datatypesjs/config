@@ -40,7 +40,7 @@ config
     wordSeparator: '-',  // Default is _
     casing: 'snake',     // Default is camel
   })
-  .loadArgv()
+  .loadCliArguments()
   .loadDefaultFiles()
   .loadFile({path: 'path/to/config-file.yaml'})
 
