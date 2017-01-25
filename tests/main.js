@@ -31,6 +31,18 @@ const Config = require('..')
 }
 
 {
+  process.env.CONFIGTEST_VALUE =
+    'data:text/plain;base64,SGVsbG8sIFdvcmxkIQ%3D%3D'
+
+  const expectedConfig = {value: 'Hello, World!'}
+  const config = new Config()
+  config.loadEnvironment({prefix: 'CONFIGTEST_'})
+  delete process.env.CONFIGTEST_VALUE
+
+  expect(config.object, 'to equal', expectedConfig)
+}
+
+{
   const tempArgv = process.argv
   process.argv.push(
     '--sub-fields', 'value',

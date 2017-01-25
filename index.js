@@ -4,12 +4,14 @@ const merge = require('deepmerge')
 const yargsParser = require('yargs-parser')
 const yaml = require('js-yaml')
 const untildify = require('untildify')
+const dataUriToBuffer = require('data-uri-to-buffer')
 
 
 module.exports = class Config {
   constructor (options = {}) {
     Object.assign(this, options)
     this._config = {}
+    this.encodeDataUris = true
 
     this.env = {
       prefix: this.appName
@@ -46,6 +48,18 @@ module.exports = class Config {
           }
           else {
             throw new Error(`"${this.env.casing}" is not supported`)
+          }
+
+          if (this.encodeDataUris) {
+            try {
+              environment[envVar] = dataUriToBuffer(environment[envVar])
+                .toString()
+            }
+            catch (error) {
+              if (!error.message.includes('not appear to be a Data URI')) {
+                throw error
+              }
+            }
           }
 
           temp[field] = index === fields.length - 1

@@ -31,11 +31,14 @@ npm install @datatypes/config
 
 ```js
 const Config = require('@datatypes/config')
-const config = new Config()
+const config = new Config({
+  appName: 'myapp'
+  encodeDataUris: false, // Default is true
+})
 
 config
   .loadEnvironment({
-    prefix: 'MYAPP_',    // Default is ''
+    prefix: 'MYAPP_ALT_NAME_', // Default is MYAPP_
     pathSeparator: '--', // Default is __
     wordSeparator: '-',  // Default is _
     casing: 'snake',     // Default is camel
@@ -43,6 +46,9 @@ config
   .loadCliArguments()
   .loadDefaultFiles()
   .loadFile({absolutePath: '/path/to/config-file.yaml'})
+  .merge({
+    settingA: 'valueA',
+  })
 
 console.log(config.object)
 ```
