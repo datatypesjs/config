@@ -1,6 +1,6 @@
 const fs = require('fs')
 const path = require('path')
-const merge = require('deepmerge')
+const assignDeep = require('assign-deep')
 const yargsParser = require('yargs-parser')
 const yaml = require('js-yaml')
 const untildify = require('untildify')
@@ -9,50 +9,72 @@ const dataUriToBuffer = require('data-uri-to-buffer')
 
 module.exports = class Config {
   constructor (options = {}) {
-    Object.assign(this, options)
-    this._config = {}
-    this.encodeDataUris = true
-
-    this.env = {
-      prefix: this.appName
-        ? this.appName.toUpperCase() + '_'
-        : '',
-      pathSeparator: '__',
-      wordSeparator: '_',
-      casing: 'camel',
+    const defaults = {
+      config: {},
+      appName: '',
     }
+    assignDeep(this, defaults, options)
+  }
+
+  static fromConfigObject (object) {
+    if (typeof object !== 'object') {
+      throw new TypeError(
+        `Type of argument must be object and not "${typeof object}"`
+      )
+    }
+    return new Config()
+      .merge(object)
+  }
+
+  get clone () {
+    return new Config()
+      .merge(this.config)
+  }
+
+  setAppName (appName) {
+    this.appName = appName
+    return this
   }
 
   loadEnvironment (options = {}) {
-    Object.assign(this.env, options)
+    const {
+      encodeDataUris = true,
+      prefix = this.appName
+        ? this.appName.toUpperCase() + '_'
+        : '',
+      pathSeparator = '__',
+      wordSeparator = '_',
+      casing = 'camel',
+    } = options
 
-    const environment = Object.assign({}, process.env)
     Object
-      .keys(environment)
+      .keys(process.env)
       .forEach(envVar => {
-        if (!envVar.startsWith(this.env.prefix)) return
+        if (!envVar.startsWith(prefix)) return
 
-        const envVarNoPrefix = envVar.replace(this.env.prefix, '')
-        const fields = envVarNoPrefix.split(this.env.pathSeparator)
+        const envVarNoPrefix = envVar.replace(prefix, '')
+        const fields = envVarNoPrefix.split(pathSeparator)
         const object = {}
         let temp = object
 
         fields.forEach((field, index) => {
           field = field.toLowerCase()
 
-          if (this.env.casing === 'camel') {
+          if (casing === 'camel') {
             field = field.replace(
-              /\_(.)/g,
+              new RegExp(`\\${wordSeparator}(.)`, 'g'),
               (match, firstChar) => firstChar.toUpperCase()
             )
           }
           else {
-            throw new Error(`"${this.env.casing}" is not supported`)
+            throw new Error(`"${casing}" is not supported`)
           }
 
-          if (this.encodeDataUris) {
+          let envValue = process.env[envVar]
+
+          if (encodeDataUris) {
             try {
-              environment[envVar] = dataUriToBuffer(environment[envVar])
+              envValue = dataUriToBuffer(process.env[envVar])
                 .toString()
             }
             catch (error) {
@@ -63,12 +85,12 @@ module.exports = class Config {
           }
 
           temp[field] = index === fields.length - 1
-            ? environment[envVar]
+            ? envValue
             : {}
           temp = temp[field]
         })
 
-        this._config = merge(this._config, object)
+        assignDeep(this.config, object)
       })
 
     return this
@@ -77,7 +99,7 @@ module.exports = class Config {
   loadCliArguments () {
     const args = yargsParser(process.argv.slice(2))
     delete args._
-    this._config = merge(this._config, args)
+    assignDeep(this.config, args)
     return this
   }
 
@@ -104,7 +126,7 @@ module.exports = class Config {
       throw new TypeError(`"${fileExtension}" is no supported file extension`)
     }
 
-    this._config = merge(this._config, configObject)
+    assignDeep(this.config, configObject)
     return this
   }
 
@@ -117,6 +139,7 @@ module.exports = class Config {
       `~/.config/${this.appName}/${this.appName}`,
     ]
     let currentPath = ''
+
     process
       .cwd()
       .split(path.sep)
@@ -141,7 +164,10 @@ module.exports = class Config {
         this.loadFile({absolutePath: untildify(filePath)})
       }
       catch (error) {
-        if (!error.message.includes('no such file')) throw error
+        if (
+          !error.message.includes('no such file') &&
+          !error.message.includes('illegal operation on a directory')
+        ) throw error
       }
     })
 
@@ -149,21 +175,17 @@ module.exports = class Config {
   }
 
   merge (configObject) {
-    this._config = merge(this._config, configObject)
+    assignDeep(this.config, configObject)
     return this
   }
 
-  get object () {
-    return this._config
-  }
-
   toJSON () {
-    return this.object
+    return this.config
   }
 
   toString () {
     return JSON
-      .stringify(this.object)
+      .stringify(this.config)
       .replace(/"/g, '')
   }
 }

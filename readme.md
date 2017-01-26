@@ -31,17 +31,17 @@ npm install @datatypes/config
 
 ```js
 const Config = require('@datatypes/config')
-const config = new Config({
+const exampleConfig = new Config({
   appName: 'myapp'
-  encodeDataUris: false, // Default is true
 })
 
-config
+exampleConfig
   .loadEnvironment({
     prefix: 'MYAPP_ALT_NAME_', // Default is MYAPP_
     pathSeparator: '--', // Default is __
     wordSeparator: '-',  // Default is _
     casing: 'snake',     // Default is camel
+    encodeDataUris: false, // Default is true
   })
   .loadCliArguments()
   .loadDefaultFiles()
@@ -50,7 +50,7 @@ config
     settingA: 'valueA',
   })
 
-console.log(config.object)
+console.log(exampleConfig.config)
 ```
 
 

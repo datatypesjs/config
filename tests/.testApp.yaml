@@ -1,2 +1,2 @@
-anotherSetting: this is an override value
+anotherSetting: this value gets overwritten
 thisSettingIsOnlyLocal: and has a value

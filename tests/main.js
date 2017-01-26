@@ -1,16 +1,15 @@
 const expect = require('unexpected')
 const Config = require('..')
 
-
 {
   process.env.CONFIGTEST_VALUE = 'something'
 
   const expectedConfig = {value: 'something'}
-  const config = new Config()
-  config.loadEnvironment({prefix: 'CONFIGTEST_'})
+  const testConfig = new Config()
+  testConfig.loadEnvironment({prefix: 'CONFIGTEST_'})
   delete process.env.CONFIGTEST_VALUE
 
-  expect(config.object, 'to equal', expectedConfig)
+  expect(testConfig.config, 'to equal', expectedConfig)
 }
 
 {
@@ -23,11 +22,11 @@ const Config = require('..')
       },
     },
   }
-  const config = new Config()
-  config.loadEnvironment({prefix: 'CONFIGTEST_'})
+  const testConfig = new Config()
+  testConfig.loadEnvironment({prefix: 'CONFIGTEST_'})
   delete process.env.CONFIGTEST_OBJECT__WITH__SUB_FIELDS
 
-  expect(config.object, 'to equal', expectedConfig)
+  expect(testConfig.config, 'to equal', expectedConfig)
 }
 
 {
@@ -35,11 +34,11 @@ const Config = require('..')
     'data:text/plain;base64,SGVsbG8sIFdvcmxkIQ%3D%3D'
 
   const expectedConfig = {value: 'Hello, World!'}
-  const config = new Config()
-  config.loadEnvironment({prefix: 'CONFIGTEST_'})
+  const testConfig = new Config()
+  testConfig.loadEnvironment({prefix: 'CONFIGTEST_'})
   delete process.env.CONFIGTEST_VALUE
 
-  expect(config.object, 'to equal', expectedConfig)
+  expect(testConfig.config, 'to equal', expectedConfig)
 }
 
 {
@@ -47,6 +46,7 @@ const Config = require('..')
   process.argv.push(
     '--sub-fields', 'value',
     '--verbose',
+    '--dot-notation.for.paths',
     '--foo', 'bar'
   )
 
@@ -54,50 +54,79 @@ const Config = require('..')
     'sub-fields': 'value',
     subFields: 'value',
     verbose: true,
+    // TODO: https://github.com/yargs/yargs-parser/issues/77
+    'dot-notation': {for: {paths: true}},
+    dotNotationForPaths: true,
     foo: 'bar',
   }
-  const config = new Config()
-  config.loadCliArguments()
+  const testConfig = new Config()
+  testConfig.loadCliArguments()
 
   process.argv = tempArgv
 
-  expect(config.object, 'to equal', expectedConfig)
+  expect(testConfig.config, 'to equal', expectedConfig)
 }
 
 {
   const expectedConfig = {
     additionalSetting: 'additionalValue',
   }
-  const config = new Config()
-  config.loadFile({relativePath: '.no-default-name.yaml'})
+  const testConfig = new Config()
+  testConfig.loadFile({relativePath: '.no-default-name.yaml'})
 
-  expect(config.object, 'to equal', expectedConfig)
+  expect(testConfig.config, 'to equal', expectedConfig)
 }
 
 {
   const expectedConfig = {
     justASetting: 'value',
-    anotherSetting: 'this is an override value',
+    anotherSetting: 'this value gets overwritten',
     thisSettingIsOnlyLocal: 'and has a value',
   }
-  const config = new Config({appName: 'testApp'})
-  config.loadDefaultFiles()
+  const testConfig = new Config({appName: 'testApp'})
+  testConfig.loadDefaultFiles()
 
-  expect(config.object, 'to equal', expectedConfig)
+  expect(testConfig.config, 'to equal', expectedConfig)
 }
 
 {
-  const configA = {
+  const testConfigA = {
     justASetting: 'value',
-    anotherSetting: 'this is an override value',
+    anotherSetting: 'this value gets overwritten',
   }
-  const configB = {
+  const testConfigB = {
     thirdSetting: 'foo',
     fourthSetting: 'bar',
   }
-  const config = new Config()
-    .merge(configA)
-    .merge(configB)
+  const testConfig = new Config()
+    .merge(testConfigA)
+    .merge(testConfigB)
 
-  expect(config.object, 'to equal', Object.assign({}, configA, configB))
+  expect(
+    testConfig.config,
+    'to equal',
+    Object.assign({}, testConfigA, testConfigB)
+  )
+}
+
+{
+  const testConfigObject = {
+    justASetting: 'value',
+    anotherSetting: 'another value',
+  }
+  const testConfig = Config.fromConfigObject(testConfigObject)
+
+  expect(testConfig.config, 'to equal', Object.assign({}, testConfigObject))
+}
+
+{
+  const testConfigObject = {
+    justASetting: 'value',
+    anotherSetting: 'another value',
+  }
+  const testConfig = Config.fromConfigObject(testConfigObject)
+  const testConfigClone = testConfig.clone
+  testConfig.merge({justASetting: 'overwrite value'})
+
+  expect(testConfigClone.config, 'to equal', testConfigObject)
 }
