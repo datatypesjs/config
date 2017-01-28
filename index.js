@@ -108,8 +108,21 @@ module.exports = class Config {
       absolutePath,
       relativePath,
     } = options
+    let filePath
 
-    const filePath = absolutePath || path.resolve(relativePath)
+    if (absolutePath) {
+      if (!path.isAbsolute(absolutePath)) {
+        throw new Error(`"${absolutePath}" is not an absolute path`)
+      }
+      filePath = absolutePath
+    }
+    else if (relativePath) {
+      if (path.isAbsolute(relativePath)) {
+        throw new Error(`"${relativePath}" is not a relative path`)
+      }
+      filePath = path.resolve(relativePath)
+    }
+
     const fileExtension = path
       .extname(filePath)
       .slice(1)
