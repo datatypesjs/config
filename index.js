@@ -132,6 +132,9 @@ module.exports = class Config {
     if (fileExtension === 'json' || fileExtension === '') {
       configObject = JSON.parse(fileContent)
     }
+    if (fileExtension === 'js') {
+      configObject = require(filePath)
+    }
     else if (fileExtension === 'yaml') {
       configObject = yaml.safeLoad(fileContent)
     }

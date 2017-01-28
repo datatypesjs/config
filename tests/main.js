@@ -79,6 +79,17 @@ const Config = require('..')
 
 {
   const expectedConfig = {
+    somePath: '/Path/to/some/dir/file.txt',
+  }
+  const testConfig = new Config()
+  testConfig
+    .loadFile({relativePath: '.dynamicConfig.js'})
+
+  expect(testConfig.config, 'to equal', expectedConfig)
+}
+
+{
+  const expectedConfig = {
     justASetting: 'value',
     anotherSetting: 'this value gets overwritten',
     thisSettingIsOnlyLocal: 'and has a value',
