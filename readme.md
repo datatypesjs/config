@@ -46,12 +46,18 @@ exampleConfig
   .loadCliArguments()
   .loadDefaultFiles()
   .loadFile({
-    absolutePath: '/path/to/config-file.yaml',
+    absolutePath: '/path/to/config-file.yaml', // Supports .yaml, .json, .js
     isRequired: true // Default is false
     shallPrintWarning: false, // Default is true
   })
   .merge({
     settingA: 'valueA',
+  })
+  // Replaces the values which contain a file path
+  // of special keys with the file content of the file path
+  .loadFilePathValues({
+    triggerCharater: '%', // Default @
+    shouldTrim: false, // Default true
   })
 
 console.log(exampleConfig.config)

@@ -199,3 +199,15 @@ const Config = require('..')
 
   expect(output, 'to be', `Warning: Tried to load the directory "${filePath}"`)
 }
+
+{
+  console.info('- It replaces file path values with their file content')
+  const testConfig = new Config()
+  testConfig
+    .merge({
+      '@fileContent': './testSecret.txt',
+    })
+    .loadFilePathValues()
+
+  // console.dir(testConfig.config, {depth: null, colors: true})
+}

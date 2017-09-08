@@ -228,6 +228,37 @@ module.exports = class Config {
     return this
   }
 
+  loadFilePathValues (options = {}) {
+    const {
+      triggerCharater = '@',
+      shouldTrim = true,
+    } = options
+
+    const thisInstance = this
+
+    function resolve (key, value) {
+      if (key.startsWith(triggerCharater) && typeof value === 'string') {
+        const filePath = path.resolve(value)
+        let fileContent = fs
+          .readFileSync(filePath)
+          .toString()
+
+        if (shouldTrim) {
+          fileContent = fileContent.trim()
+        }
+
+        thisInstance.config[key.slice(1)] = fileContent // Set key
+        delete thisInstance.config[key] // Delete @key
+      }
+      else {
+        return value
+      }
+    }
+
+    // Missuse as tree walker
+    JSON.stringify(this, resolve)
+  }
+
   merge (configObject) {
     assignDeep(this.config, configObject)
     return this
