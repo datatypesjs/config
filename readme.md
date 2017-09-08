@@ -39,13 +39,17 @@ exampleConfig
   .loadEnvironment({
     prefix: 'MYAPP_ALT_NAME_', // Default is MYAPP_
     pathSeparator: '--', // Default is __
-    wordSeparator: '-',  // Default is _
-    casing: 'snake',     // Default is camel
+    wordSeparator: '-', // Default is _
+    casing: 'snake', // Default is camel
     encodeDataUris: false, // Default is true
   })
   .loadCliArguments()
   .loadDefaultFiles()
-  .loadFile({absolutePath: '/path/to/config-file.yaml'})
+  .loadFile({
+    absolutePath: '/path/to/config-file.yaml',
+    isRequired: true // Default is false
+    shallPrintWarning: false, // Default is true
+  })
   .merge({
     settingA: 'valueA',
   })

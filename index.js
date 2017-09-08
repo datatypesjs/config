@@ -107,6 +107,8 @@ module.exports = class Config {
     const {
       absolutePath,
       relativePath,
+      isRequired = false,
+      shallPrintWarning = true,
     } = options
     let filePath
 
@@ -122,31 +124,73 @@ module.exports = class Config {
       }
       filePath = path.resolve(relativePath)
     }
+    else if (options.path) {
+      filePath = path.resolve(options.path)
+    }
+    else {
+      throw new Error('No file path was specified')
+    }
 
     const fileExtension = path
       .extname(filePath)
       .slice(1)
-    const fileContent = fs.readFileSync(filePath)
+    let fileContent
+
+    try {
+      fileContent = fs.readFileSync(filePath)
+    }
+    catch (error) {
+      const notExistant = error.message.includes('no such file')
+      const isDirectory = error.message
+        .includes('illegal operation on a directory')
+
+      if (isRequired) throw error
+
+      if (notExistant) {
+        return
+      }
+      else if (isDirectory) {
+        if (shallPrintWarning) {
+          console.warn(`Warning: Tried to load the directory "${filePath}"`)
+        }
+        return
+      }
+      else {
+        throw error
+      }
+    }
+
     let configObject
 
-    if (fileExtension === 'json' || fileExtension === '') {
-      configObject = JSON.parse(fileContent)
+    try {
+      if (fileExtension === 'json' || fileExtension === '') {
+        configObject = JSON.parse(fileContent)
+      }
+      else if (fileExtension === 'js') {
+        configObject = require(filePath)
+      }
+      else if (fileExtension === 'yaml') {
+        configObject = yaml.safeLoad(fileContent)
+      }
+      else {
+        throw new TypeError(`"${fileExtension}" is no supported file extension`)
+      }
     }
-    if (fileExtension === 'js') {
-      configObject = require(filePath)
-    }
-    else if (fileExtension === 'yaml') {
-      configObject = yaml.safeLoad(fileContent)
-    }
-    else {
-      throw new TypeError(`"${fileExtension}" is no supported file extension`)
+    catch (error) {
+      console.error(
+        `Following error occurred while trying to load "${filePath}":`
+      )
+      throw error
     }
 
     assignDeep(this.config, configObject)
     return this
   }
 
-  loadDefaultFiles () {
+  loadDefaultFiles (options = {}) {
+    const {
+      shallPrintWarning = false,
+    } = options
     const baseFilePaths = [
       `~/.${this.appName}`,
       `~/.${this.appName}/config`,
@@ -175,16 +219,10 @@ module.exports = class Config {
       .map(filePath => path.normalize(filePath))
 
     filePaths.forEach(filePath => {
-      // console.log(untildify(filePath))
-      try {
-        this.loadFile({absolutePath: untildify(filePath)})
-      }
-      catch (error) {
-        if (
-          !error.message.includes('no such file') &&
-          !error.message.includes('illegal operation on a directory')
-        ) throw error
-      }
+      this.loadFile({
+        absolutePath: untildify(filePath),
+        shallPrintWarning,
+      })
     })
 
     return this
