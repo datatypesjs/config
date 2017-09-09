@@ -177,27 +177,32 @@ const Config = require('..')
   expect(runTest, 'to throw error')
 }
 
+
 {
-  console.info('- It logs warning when loading non existant directory')
+  console.info('- It throw error when loading directory')
   const path = require('path')
   const testConfig = new Config()
-  const tempWarn = console.warn
-  let output = ''
   const filePath = path.resolve('.')
 
-  console.warn = (text) => {
-    output += text
+  function runTest () {
+    testConfig.loadFile({
+      absolutePath: filePath,
+    })
   }
 
-  const loadOptions = {
+  expect(runTest, 'to throw error')
+}
+
+{
+  console.info('- It ignores error when loading directory')
+  const path = require('path')
+  const testConfig = new Config()
+  const filePath = path.resolve('.')
+
+  testConfig.loadFile({
     absolutePath: filePath,
-  }
-
-  testConfig.loadFile(loadOptions)
-
-  console.warn = tempWarn
-
-  expect(output, 'to be', `Warning: Tried to load the directory "${filePath}"`)
+    ignoreIsDirectoryError: true,
+  })
 }
 
 {
@@ -208,6 +213,4 @@ const Config = require('..')
       '@fileContent': './testSecret.txt',
     })
     .loadFilePathValues()
-
-  // console.dir(testConfig.config, {depth: null, colors: true})
 }

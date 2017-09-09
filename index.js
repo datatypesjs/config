@@ -108,7 +108,7 @@ module.exports = class Config {
       absolutePath,
       relativePath,
       isRequired = false,
-      shallPrintWarning = true,
+      ignoreIsDirectoryError = false,
     } = options
     let filePath
 
@@ -149,13 +149,11 @@ module.exports = class Config {
       if (notExistant) {
         return
       }
-      else if (isDirectory) {
-        if (shallPrintWarning) {
-          console.warn(`Warning: Tried to load the directory "${filePath}"`)
-        }
-        return
-      }
       else {
+        if (isDirectory) {
+          if (ignoreIsDirectoryError) return
+          error.message = `"${filePath}" is a directory and not a file`
+        }
         throw error
       }
     }
@@ -177,9 +175,9 @@ module.exports = class Config {
       }
     }
     catch (error) {
-      console.error(
-        `Following error occurred while trying to load "${filePath}":`
-      )
+      error.message =
+        `Following error occurred while trying to load "${filePath}":\n` +
+        error.message
       throw error
     }
 
@@ -189,7 +187,7 @@ module.exports = class Config {
 
   loadDefaultFiles (options = {}) {
     const {
-      shallPrintWarning = false,
+      ignoreIsDirectoryError = true,
     } = options
     const baseFilePaths = [
       `~/.${this.appName}`,
@@ -221,7 +219,7 @@ module.exports = class Config {
     filePaths.forEach(filePath => {
       this.loadFile({
         absolutePath: untildify(filePath),
-        shallPrintWarning,
+        ignoreIsDirectoryError,
       })
     })
 
