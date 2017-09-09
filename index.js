@@ -110,7 +110,7 @@ module.exports = class Config {
       isRequired = false,
       ignoreIsDirectoryError = false,
     } = options
-    let filePath
+    let filePath = null
 
     if (absolutePath) {
       if (!path.isAbsolute(absolutePath)) {
