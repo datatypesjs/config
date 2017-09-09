@@ -2,6 +2,7 @@ const expect = require('unexpected')
 const Config = require('..')
 
 {
+  console.info('- It reads config values from environment')
   process.env.CONFIGTEST_VALUE = 'something'
 
   const expectedConfig = {value: 'something'}
@@ -13,6 +14,7 @@ const Config = require('..')
 }
 
 {
+  console.info('- It reads nested config values from environment')
   process.env.CONFIGTEST_OBJECT__WITH__SUB_FIELDS = 'another thing'
 
   const expectedConfig = {
@@ -30,6 +32,7 @@ const Config = require('..')
 }
 
 {
+  console.info('- It reads base64 encoded config values from environment')
   process.env.CONFIGTEST_VALUE =
     'data:text/plain;base64,SGVsbG8sIFdvcmxkIQ%3D%3D'
 
@@ -42,6 +45,7 @@ const Config = require('..')
 }
 
 {
+  console.info('- It reads config from CLI arguments')
   const tempArgv = process.argv
   process.argv.push(
     '--sub-fields', 'value',
@@ -68,6 +72,7 @@ const Config = require('..')
 }
 
 {
+  console.info('- It reads config from additional file')
   const expectedConfig = {
     additionalSetting: 'additionalValue',
   }
@@ -78,6 +83,7 @@ const Config = require('..')
 }
 
 {
+  console.info('- It reads config from JavaScript file')
   const expectedConfig = {
     somePath: '/Path/to/some/dir/file.txt',
   }
@@ -89,6 +95,7 @@ const Config = require('..')
 }
 
 {
+  console.info('- It reads configs from default files')
   const expectedConfig = {
     justASetting: 'value',
     anotherSetting: 'this value gets overwritten',
@@ -101,6 +108,7 @@ const Config = require('..')
 }
 
 {
+  console.info('- It merges additional user specified configs')
   const testConfigA = {
     justASetting: 'value',
     anotherSetting: 'this value gets overwritten',
@@ -121,6 +129,7 @@ const Config = require('..')
 }
 
 {
+  console.info('- It constructs config from config object')
   const testConfigObject = {
     justASetting: 'value',
     anotherSetting: 'another value',
@@ -131,6 +140,7 @@ const Config = require('..')
 }
 
 {
+  console.info('- It clones a config instance')
   const testConfigObject = {
     justASetting: 'value',
     anotherSetting: 'another value',
@@ -140,4 +150,67 @@ const Config = require('..')
   testConfig.merge({justASetting: 'overwrite value'})
 
   expect(testConfigClone.config, 'to equal', testConfigObject)
+}
+
+{
+  console.info('- It ignores error when loading non existant optional file')
+  const testConfig = new Config()
+
+  const loadOptions = {
+    relativePath: 'does-not-exist.yaml',
+  }
+  testConfig.loadFile(loadOptions)
+}
+
+{
+  console.info('- It throws error when loading non existant required file')
+  const testConfig = new Config()
+
+  const loadOptions = {
+    relativePath: 'does-not-exist.yaml',
+    isRequired: true,
+  }
+  function runTest () {
+    return testConfig.loadFile(loadOptions)
+  }
+
+  expect(runTest, 'to throw error')
+}
+
+
+{
+  console.info('- It throw error when loading directory')
+  const path = require('path')
+  const testConfig = new Config()
+  const filePath = path.resolve('.')
+
+  function runTest () {
+    testConfig.loadFile({
+      absolutePath: filePath,
+    })
+  }
+
+  expect(runTest, 'to throw error')
+}
+
+{
+  console.info('- It ignores error when loading directory')
+  const path = require('path')
+  const testConfig = new Config()
+  const filePath = path.resolve('.')
+
+  testConfig.loadFile({
+    absolutePath: filePath,
+    ignoreIsDirectoryError: true,
+  })
+}
+
+{
+  console.info('- It replaces file path values with their file content')
+  const testConfig = new Config()
+  testConfig
+    .merge({
+      '@fileContent': './testSecret.txt',
+    })
+    .loadFilePathValues()
 }

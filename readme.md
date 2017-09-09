@@ -39,15 +39,25 @@ exampleConfig
   .loadEnvironment({
     prefix: 'MYAPP_ALT_NAME_', // Default is MYAPP_
     pathSeparator: '--', // Default is __
-    wordSeparator: '-',  // Default is _
-    casing: 'snake',     // Default is camel
+    wordSeparator: '-', // Default is _
+    casing: 'snake', // Default is camel
     encodeDataUris: false, // Default is true
   })
   .loadCliArguments()
   .loadDefaultFiles()
-  .loadFile({absolutePath: '/path/to/config-file.yaml'})
+  .loadFile({
+    absolutePath: '/path/to/config-file.yaml', // Supports .yaml, .json, .js
+    isRequired: true // Default is false
+    ignoreIsDirectoryError: true, // Default is false
+  })
   .merge({
     settingA: 'valueA',
+  })
+  // Replaces the values which contain a file path
+  // of special keys with the file content of the file path
+  .loadFilePathValues({
+    triggerCharater: '%', // Default @
+    shouldTrim: false, // Default true
   })
 
 console.log(exampleConfig.config)

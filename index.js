@@ -107,8 +107,10 @@ module.exports = class Config {
     const {
       absolutePath,
       relativePath,
+      isRequired = false,
+      ignoreIsDirectoryError = false,
     } = options
-    let filePath
+    let filePath = null
 
     if (absolutePath) {
       if (!path.isAbsolute(absolutePath)) {
@@ -122,31 +124,71 @@ module.exports = class Config {
       }
       filePath = path.resolve(relativePath)
     }
+    else if (options.path) {
+      filePath = path.resolve(options.path)
+    }
+    else {
+      throw new Error('No file path was specified')
+    }
 
     const fileExtension = path
       .extname(filePath)
       .slice(1)
-    const fileContent = fs.readFileSync(filePath)
+    let fileContent
+
+    try {
+      fileContent = fs.readFileSync(filePath)
+    }
+    catch (error) {
+      const notExistant = error.message.includes('no such file')
+      const isDirectory = error.message
+        .includes('illegal operation on a directory')
+
+      if (isRequired) throw error
+
+      if (notExistant) {
+        return
+      }
+      else {
+        if (isDirectory) {
+          if (ignoreIsDirectoryError) return
+          error.message = `"${filePath}" is a directory and not a file`
+        }
+        throw error
+      }
+    }
+
     let configObject
 
-    if (fileExtension === 'json' || fileExtension === '') {
-      configObject = JSON.parse(fileContent)
+    try {
+      if (fileExtension === 'json' || fileExtension === '') {
+        configObject = JSON.parse(fileContent)
+      }
+      else if (fileExtension === 'js') {
+        configObject = require(filePath)
+      }
+      else if (fileExtension === 'yaml') {
+        configObject = yaml.safeLoad(fileContent)
+      }
+      else {
+        throw new TypeError(`"${fileExtension}" is no supported file extension`)
+      }
     }
-    if (fileExtension === 'js') {
-      configObject = require(filePath)
-    }
-    else if (fileExtension === 'yaml') {
-      configObject = yaml.safeLoad(fileContent)
-    }
-    else {
-      throw new TypeError(`"${fileExtension}" is no supported file extension`)
+    catch (error) {
+      error.message =
+        `Following error occurred while trying to load "${filePath}":\n` +
+        error.message
+      throw error
     }
 
     assignDeep(this.config, configObject)
     return this
   }
 
-  loadDefaultFiles () {
+  loadDefaultFiles (options = {}) {
+    const {
+      ignoreIsDirectoryError = true,
+    } = options
     const baseFilePaths = [
       `~/.${this.appName}`,
       `~/.${this.appName}/config`,
@@ -175,19 +217,44 @@ module.exports = class Config {
       .map(filePath => path.normalize(filePath))
 
     filePaths.forEach(filePath => {
-      // console.log(untildify(filePath))
-      try {
-        this.loadFile({absolutePath: untildify(filePath)})
-      }
-      catch (error) {
-        if (
-          !error.message.includes('no such file') &&
-          !error.message.includes('illegal operation on a directory')
-        ) throw error
-      }
+      this.loadFile({
+        absolutePath: untildify(filePath),
+        ignoreIsDirectoryError,
+      })
     })
 
     return this
+  }
+
+  loadFilePathValues (options = {}) {
+    const {
+      triggerCharater = '@',
+      shouldTrim = true,
+    } = options
+
+    const thisInstance = this
+
+    function resolve (key, value) {
+      if (key.startsWith(triggerCharater) && typeof value === 'string') {
+        const filePath = path.resolve(value)
+        let fileContent = fs
+          .readFileSync(filePath)
+          .toString()
+
+        if (shouldTrim) {
+          fileContent = fileContent.trim()
+        }
+
+        thisInstance.config[key.slice(1)] = fileContent // Set key
+        delete thisInstance.config[key] // Delete @key
+      }
+      else {
+        return value
+      }
+    }
+
+    // Missuse as tree walker
+    JSON.stringify(this, resolve)
   }
 
   merge (configObject) {
