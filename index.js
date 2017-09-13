@@ -255,6 +255,8 @@ module.exports = class Config {
 
     // Missuse as tree walker
     JSON.stringify(this, resolve)
+    
+    return this
   }
 
   merge (configObject) {
