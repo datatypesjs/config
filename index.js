@@ -112,18 +112,22 @@ module.exports = class Config {
       relativePath,
       isRequired = false,
       ignoreIsDirectoryError = false,
-      onSuccess = filePath => {},
+      onSuccess = filePath => {}, // eslint-disable-line no-unused-vars
     } = options
     const filePath =
       this.resolveFilePath(options.filePath || absolutePath || relativePath)
-    const fileContent = this.getFileContent({filePath, isRequired})
+    const fileContent =
+      this.getFileContent({filePath, isRequired, ignoreIsDirectoryError})
     const configObject = this.getConfigObject({fileContent, filePath})
 
     assignDeep(this.config, configObject)
 
     try {
       onSuccess(filePath)
-    } catch (error) { }
+    }
+    catch (error) {
+      // Ignore any errors in the onSuccess hook
+    }
 
     return this
   }
@@ -167,12 +171,11 @@ module.exports = class Config {
   }
 
 
-  getFileContent ({filePath, isRequired}) {
+  getFileContent ({filePath, isRequired, ignoreIsDirectoryError}) {
     try {
       return fs.readFileSync(filePath)
     }
     catch (error) {
-      const notExistant = error.message.includes('no such file')
       const isDirectory = error.message
         .includes('illegal operation on a directory')
 

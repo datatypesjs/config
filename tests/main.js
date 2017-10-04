@@ -89,7 +89,9 @@ const Config = require('..')
   let hookFilePath
   testConfig.loadFile({
     relativePath: '.no-default-name.yaml',
-    onSuccess: filePath => { hookFilePath = filePath },
+    onSuccess: filePath => {
+      hookFilePath = filePath
+    },
   })
   expect(hookFilePath, 'to equal', path.resolve('.no-default-name.yaml'))
 }
@@ -193,7 +195,6 @@ const Config = require('..')
 
 {
   console.info('- It throw error when loading directory')
-  const path = require('path')
   const testConfig = new Config()
   const filePath = path.resolve('.')
 
@@ -209,7 +210,6 @@ const Config = require('..')
 
 {
   console.info('- It ignores error when loading directory')
-  const path = require('path')
   const testConfig = new Config()
   const filePath = path.resolve('.')
 
