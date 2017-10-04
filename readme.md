@@ -46,7 +46,7 @@ exampleConfig
   .loadCliArguments()
   .loadDefaultFiles()
   .loadFile({
-    absolutePath: '/path/to/config-file.yaml', // Supports .yaml, .json, .js
+    filePath: '/path/to/config-file.yaml', // Supports .yaml, .json, .js
     isRequired: true // Default is false
     ignoreIsDirectoryError: true, // Default is false
   })
