@@ -111,12 +111,18 @@ module.exports = class Config {
       relativePath,
       isRequired = false,
       ignoreIsDirectoryError = false,
+      onSuccess = filePath => {},
     } = options
     const filePath = this.resolveFilePath({absolutePath, relativePath})
     const fileContent = this.getFileContent({filePath, isRequired})
     const configObject = this.getConfigObject({fileContent, filePath})
 
     assignDeep(this.config, configObject)
+
+    try {
+      onSuccess(filePath)
+    } catch (error) { }
+
     return this
   }
 

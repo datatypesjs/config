@@ -1,3 +1,4 @@
+const path = require('path')
 const expect = require('unexpected')
 const Config = require('..')
 
@@ -81,6 +82,18 @@ const Config = require('..')
 
   expect(testConfig.config, 'to equal', expectedConfig)
 }
+
+{
+  console.info('- It calls onSuccess hook')
+  const testConfig = new Config()
+  let hookFilePath
+  testConfig.loadFile({
+    relativePath: '.no-default-name.yaml',
+    onSuccess: filePath => { hookFilePath = filePath },
+  })
+  expect(hookFilePath, 'to equal', path.resolve('.no-default-name.yaml'))
+}
+
 
 {
   console.info('- It reads config from JavaScript file')
