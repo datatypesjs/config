@@ -107,13 +107,15 @@ module.exports = class Config {
 
   loadFile (options = {}) {
     const {
+      // filePath,
       absolutePath,
       relativePath,
       isRequired = false,
       ignoreIsDirectoryError = false,
       onSuccess = filePath => {},
     } = options
-    const filePath = this.resolveFilePath({absolutePath, relativePath})
+    const filePath =
+      this.resolveFilePath(options.filePath || absolutePath || relativePath)
     const fileContent = this.getFileContent({filePath, isRequired})
     const configObject = this.getConfigObject({fileContent, filePath})
 
@@ -127,21 +129,9 @@ module.exports = class Config {
   }
 
 
-  resolveFilePath ({absolutePath, relativePath}) {
-    if (absolutePath) {
-      if (!path.isAbsolute(absolutePath)) {
-        throw new Error(`"${absolutePath}" is not an absolute path`)
-      }
-      return absolutePath
-    }
-    else if (relativePath) {
-      if (path.isAbsolute(relativePath)) {
-        throw new Error(`"${relativePath}" is not a relative path`)
-      }
-      return path.resolve(relativePath)
-    }
-    else if (options.path) {
-      return path.resolve(options.path)
+  resolveFilePath (filePath) {
+    if (filePath) {
+      return path.resolve(filePath)
     }
     else {
       throw new Error('No file path was specified')
