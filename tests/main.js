@@ -187,6 +187,7 @@ const Config = require('..')
   function runTest () {
     testConfig.loadFile({
       absolutePath: filePath,
+      isRequired: true,
     })
   }
 

@@ -96,12 +96,14 @@ module.exports = class Config {
     return this
   }
 
+
   loadCliArguments () {
     const args = yargsParser(process.argv.slice(2))
     delete args._
     assignDeep(this.config, args)
     return this
   }
+
 
   loadFile (options = {}) {
     const {
@@ -110,65 +112,51 @@ module.exports = class Config {
       isRequired = false,
       ignoreIsDirectoryError = false,
     } = options
-    let filePath = null
+    const filePath = this.resolveFilePath({absolutePath, relativePath})
+    const fileContent = this.getFileContent({filePath, isRequired})
+    const configObject = this.getConfigObject({fileContent, filePath})
 
+    assignDeep(this.config, configObject)
+    return this
+  }
+
+
+  resolveFilePath ({absolutePath, relativePath}) {
     if (absolutePath) {
       if (!path.isAbsolute(absolutePath)) {
         throw new Error(`"${absolutePath}" is not an absolute path`)
       }
-      filePath = absolutePath
+      return absolutePath
     }
     else if (relativePath) {
       if (path.isAbsolute(relativePath)) {
         throw new Error(`"${relativePath}" is not a relative path`)
       }
-      filePath = path.resolve(relativePath)
+      return path.resolve(relativePath)
     }
     else if (options.path) {
-      filePath = path.resolve(options.path)
+      return path.resolve(options.path)
     }
     else {
       throw new Error('No file path was specified')
     }
+  }
 
-    const fileExtension = path
-      .extname(filePath)
-      .slice(1)
-    let fileContent
 
+  getConfigObject ({fileContent, filePath}) {
     try {
-      fileContent = fs.readFileSync(filePath)
-    }
-    catch (error) {
-      const notExistant = error.message.includes('no such file')
-      const isDirectory = error.message
-        .includes('illegal operation on a directory')
+      const fileExtension = path
+        .extname(filePath)
+        .slice(1)
 
-      if (isRequired) throw error
-
-      if (notExistant) {
-        return
-      }
-      else {
-        if (isDirectory) {
-          if (ignoreIsDirectoryError) return
-          error.message = `"${filePath}" is a directory and not a file`
-        }
-        throw error
-      }
-    }
-
-    let configObject
-
-    try {
       if (fileExtension === 'json' || fileExtension === '') {
-        configObject = JSON.parse(fileContent)
+        return JSON.parse(fileContent)
       }
       else if (fileExtension === 'js') {
-        configObject = require(filePath)
+        return require(filePath)
       }
       else if (fileExtension === 'yaml') {
-        configObject = yaml.safeLoad(fileContent)
+        return yaml.safeLoad(fileContent)
       }
       else {
         throw new TypeError(`"${fileExtension}" is no supported file extension`)
@@ -180,10 +168,27 @@ module.exports = class Config {
         error.message
       throw error
     }
-
-    assignDeep(this.config, configObject)
-    return this
   }
+
+
+  getFileContent ({filePath, isRequired}) {
+    try {
+      return fs.readFileSync(filePath)
+    }
+    catch (error) {
+      const notExistant = error.message.includes('no such file')
+      const isDirectory = error.message
+        .includes('illegal operation on a directory')
+
+      if (isRequired && (ignoreIsDirectoryError || !isDirectory)) {
+        throw new Error(`"${filePath}" is not a file`)
+      }
+      else {
+        return '{}'
+      }
+    }
+  }
+
 
   loadDefaultFiles (options = {}) {
     const {
@@ -255,7 +260,7 @@ module.exports = class Config {
 
     // Missuse as tree walker
     JSON.stringify(this, resolve)
-    
+
     return this
   }
 
