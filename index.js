@@ -176,8 +176,9 @@ module.exports = class Config {
       const isDirectory = error.message
         .includes('illegal operation on a directory')
 
-      if (isRequired && (ignoreIsDirectoryError || !isDirectory)) {
-        throw new Error(`"${filePath}" is not a file`)
+      // Throw, except it is a directory and we should ignore directory errors
+      if (isRequired && !(isDirectory && ignoreIsDirectoryError)) {
+        throw new Error(`Failed to load file "${filePath}": ${error.message}`)
       }
       else {
         return '{}'
