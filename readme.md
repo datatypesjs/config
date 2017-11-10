@@ -47,7 +47,7 @@ exampleConfig
   .loadDefaultFiles()
   .loadFile({
     filePath: '/path/to/config-file.yaml', // Supports .yaml, .json, .js
-    isRequired: true // Default is false
+    isRequired: true, // Default is false
     ignoreIsDirectoryError: true, // Default is false
   })
   .merge({
